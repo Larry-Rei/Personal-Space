@@ -1,29 +1,386 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-    <title>Larry's Game Dev Portfolio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Larry / Rei - 游戏客户端开发</title>
+    <script type="text/javascript" src="https://player.dogecloud.com/js/loader"></script>
     <style>
-        /* 这里是为你定制的深色极客风 CSS */
-        body { background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; padding: 40px; }
-        .project-card { border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin-bottom: 30px; }
-        video { width: 100%; border-radius: 8px; margin-bottom: 15px; background: #000; }
-        h2 { color: #58a6ff; }
-        .tech-tag { background: #238636; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; margin-right: 5px; }
+        /* ================= 核心变量与重置 ================= */
+        :root {
+            --bg-color: #030712;
+            --primary: #0ea5e9;
+            --primary-glow: rgba(14, 165, 233, 0.5);
+            --secondary: #10b981;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden; line-height: 1.6;
+        }
+
+        /* ================= 动态背景画布 ================= */
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.6; pointer-events: none; }
+
+        /* ================= 布局与容器 ================= */
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        section { margin-bottom: 80px; animation: fadeInUp 1s ease-out forwards; opacity: 0; transform: translateY(30px); }
+        .section-title { font-size: 2rem; color: var(--text-main); margin-bottom: 30px; border-left: 4px solid var(--primary); padding-left: 15px; text-shadow: 0 0 10px var(--primary-glow); }
+
+        /* ================= Hero 头部 ================= */
+        .hero { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+        .hero h1 { font-size: 5rem; margin-bottom: 10px; font-weight: 800; letter-spacing: -2px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .typewriter { font-size: 1.5rem; color: var(--text-muted); font-family: monospace; border-right: 2px solid var(--primary); white-space: nowrap; overflow: hidden; animation: typing 3s steps(30, end), blink-caret .75s step-end infinite; }
+
+        /* ================= 个人大盘 (Stats Grid) ================= */
+        .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .bento-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 25px; backdrop-filter: blur(12px); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .bento-card:hover { transform: translateY(-5px); border-color: var(--primary-glow); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        .bento-card h3 { color: var(--primary); font-size: 1.2rem; margin-bottom: 15px; }
+        .badge { display: inline-block; padding: 4px 10px; background: rgba(16, 185, 129, 0.1); color: var(--secondary); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 20px; font-size: 0.85rem; margin: 0 5px 10px 0; }
+        .honor-list li { margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; }
+        .honor-list li::before { content: "🏆"; margin-right: 10px; }
+
+        /* ================= 项目卡片 ================= */
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; }
+        .project-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(10px); display: flex; flex-direction: column; }
+        .project-card:hover { transform: scale(1.03); border-color: var(--primary); box-shadow: 0 0 40px var(--primary-glow); }
+        
+        /* 注意：这里加入了背景图片样式的兼容 */
+        .project-cover { height: 200px; background: linear-gradient(45deg, #0f172a, #1e293b); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .project-cover::after { content: "▶ CLICK TO EXPLORE"; font-weight: bold; color: rgba(255, 255, 255, 0.3); letter-spacing: 2px; }
+        
+        .project-info { padding: 25px; }
+        .project-info h3 { font-size: 1.5rem; margin-bottom: 10px; color: var(--text-main); }
+        .project-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px; }
+
+        /* ================= 华丽双栏弹窗 ================= */
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); opacity: 0; transition: opacity 0.3s; }
+        .modal.show { display: flex; opacity: 1; align-items: center; justify-content: center; }
+        .modal-content { background: #0f172a; width: 90%; max-width: 1200px; max-height: 85vh; border-radius: 24px; border: 1px solid var(--primary-glow); overflow: hidden; display: flex; flex-direction: row; box-shadow: 0 0 60px rgba(14, 165, 233, 0.2); transform: scale(0.95); transition: transform 0.3s; }
+        .modal.show .modal-content { transform: scale(1); }
+        
+        .modal-left { flex: 1.2; padding: 30px; background: #0b1120; border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; }
+        /* 播放器容器的基础样式 */
+        .player-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); border: 1px solid #333; }
+        
+        .modal-right { flex: 1; padding: 40px; overflow-y: auto; }
+        .modal-right h2 { color: var(--primary); font-size: 2rem; margin-bottom: 10px; }
+        .modal-right h4 { color: #fff; margin: 25px 0 15px 0; font-size: 1.2rem; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .modal-right p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px; }
+        .modal-right ul { padding-left: 20px; color: #cbd5e1; }
+        .modal-right li { margin-bottom: 12px; line-height: 1.6; }
+        .modal-right li strong { color: var(--secondary); }
+        .close-btn { position: absolute; top: 20px; right: 30px; font-size: 30px; color: #888; cursor: pointer; transition: color 0.2s; z-index: 10; }
+        .close-btn:hover { color: #fff; }
+
+        @media (max-width: 900px) { .modal-content { flex-direction: column; overflow-y: auto; } .modal-left { border-right: none; border-bottom: 1px solid var(--glass-border); } }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink-caret { 50% { border-color: transparent } }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
+
 <body>
-    <h1>Larry / Rei - 游戏客户端开发作品集</h1>
-    
-    <div class="project-card">
-        <h2>项目</h2>
-        <video controls poster="这里可以放一张封面图.jpg">
-            <source src="这里替换成多吉云的视频外链地址" type="video/mp4">
-            浏览器不支持播放视频喔，真傻福。
-        </video>
-        <p><span class="tech-tag">C++</span> <span class="tech-tag">UE5</span> <span class="tech-tag">物理系统</span></p>
-        <p>核心逻辑：主导设计基于 FSM 的角色状态管理系统，通过解耦数据层与表现层，实现了丝滑的 3C 体验。</p>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="container">
+        <section class="hero" style="animation-delay: 0.1s;">
+            <h1>Larry / <span>Rei</span></h1>
+            <div class="typewriter">>>> 游戏客户端开发实习生_</div>
+        </section>
+
+        <section style="animation-delay: 0.3s;">
+            <h2 class="section-title">System.Info()</h2>
+            <div class="bento-grid">
+                <div class="bento-card">
+                    <h3>[ 教育背景 ]</h3>
+                    <p style="font-size:1.5rem; font-weight:bold; color:#fff;">计算机科学与技术</p>
+                    <p style="font-size:1rem; color:var(--text-muted);">东莞理工学院</p>
+                    <p style="font-size:1rem; color:var(--text-muted);">大三在读</p>
+                    <p style="margin-top:10px; color:var(--secondary);">GPA: 3.71 / 4.0 (专业前 5%)</p>
+                    <p style="color:var(--text-muted); font-size:0.9rem;">两次获得校内最高奖学金</p>
+                </div>
+                <div class="bento-card">
+                    <h3>[ 做过的事 ]</h3>
+                    <ul class="honor-list" style="list-style: none; padding:0;">
+                        <li>蓝桥杯 C++软件B组 (省二等奖)</li>
+                        <li>GGJ 2026 X CiGA 中国区 -- 广州南沙站线下通关</li>
+                        <li>东方设计奖全国高校创新设计大赛 (省三等奖)</li>
+                        <li>英语 CET-6 | C1 驾照</li>
+                    </ul>
+                </div>
+                <div class="bento-card">
+                    <h3>[ 技术栈 ]</h3>
+                    <div>
+                        <span class="badge">C++ / C# OOP</span>
+                        <span class="badge">数据结构与算法</span>
+                        <span class="badge">计算机组成原理 / OS</span>
+                        <span class="badge">Lua / xLua 热更新</span>
+                        <span class="badge">Unity 引擎全栈</span>
+                        <span class="badge">3D 渲染管线 / Shader</span>
+                        <span class="badge">数字建模与贴图设计</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="animation-delay: 0.5s;">
+            <h2 class="section-title">Execute.Projects()</h2>
+            <div class="project-grid">
+                
+                <div class="project-card" onclick="openModal('modal-yd')">
+                    <div class="project-cover"style="background-image: url('img/VC.png'); background-size: cover; background-position: center;"></div>
+                    <div class="project-info">
+                        <h3>《跃动嘉年华》</h3>
+                        <p class="project-desc">3D 第三人称派对闯关游戏。基于物理引擎与状态机驱动，打造极致 3C 体验。</p>
+                        <div>
+                            <span class="badge">FSM 状态机</span>
+                            <span class="badge">Unity Input System</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" onclick="openModal('modal-ys')">
+                    <div class="project-cover"style="background-image: url('img/MTS.png'); background-size: cover; background-position: center;"></div>
+                    <div class="project-info">
+                        <h3>《月隧穿梭》</h3>
+                        <p class="project-desc">极低内存开销的无尽地图驾驶游戏。运用运行时顶点计算实现程序化地形生成。</p>
+                        <div>
+                            <span class="badge">PCG 生成</span>
+                            <span class="badge">物理引擎</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" onclick="openModal('modal-fb')">
+                    <div class="project-cover" style="background-image: url('img/bird.png'); background-size: cover; background-position: center;"></div>
+                    <div class="project-info">
+                        <h3>《Flappy Bird 重构版》</h3>
+                        <p class="project-desc">引入 xLua 框架全面重构，实现“C# 底层承载 + Lua 业务热更”的混合架构。</p>
+                        <div>
+                            <span class="badge">xLua 热更框架</span>
+                            <span class="badge">C# / Lua 混合编程</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
     </div>
 
-    </body>
+    <div id="modal-yd" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-yd')">&times;</span>
+            <div class="modal-left">
+                <div id="player-yd" class="player-container"></div>
+            </div>
+            <div class="modal-right">
+                <h2>《跃动嘉年华》</h2>
+                <p><strong>项目描述：</strong>一款基于物理引擎与状态机驱动的 3D 第三人称派对闯关嘉年华游戏。</p>
+                <div>
+                    <span class="badge">FSM有限状态机</span><span class="badge">Event-Driven 架构</span><span class="badge">物理引擎</span><span class="badge">Shader 开发</span><span class="badge">UGUI</span><span class="badge">Unity Input System</span>
+                </div>
+                <h4>⚙️ 核心架构与逻辑拆解</h4>
+                <ul>
+                    <li><strong>核心状态机架构搭建：</strong>主导设计基于 FSM (有限状态机) 的角色状态管理系统。通过抽象 Entity 基类统一封装实体物理属性与基础行为，严格定义 EntityState 生命周期。实现了主角十余种复杂交互状态的无缝切换及敌对单位的巡逻逻辑，大幅提升系统扩展性。</li>
+                    <li><strong>3C 体验与物理控制器开发：</strong>基于纯物理系统从零构建角色控制器，全面接入 New Input System。熟练运用物理射线检测 (CapsuleCast) 与 3D 向量数学处理复杂斜坡与碰撞穿透，结合 Cinemachine 打磨出丝滑连贯的体验。</li>
+                    <li><strong>Shader 特效与事件解耦：</strong>运用 Perlin Noise 噪声采样与 Alpha Clip 技术定制“焚尽消散”材质特效。通过监听底层 Entity 事件中心广播的死亡信号触发视觉表现，完美实现数据层与表现层的逻辑解耦。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-ys" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-ys')">&times;</span>
+            <div class="modal-left">
+                <div id="player-ys" class="player-container"></div>
+            </div>
+            <div class="modal-right">
+                <h2>《月隧穿梭》</h2>
+                <p><strong>项目描述：</strong>一款在不断动态滚动的程序化圆柱体世界中驾驶载具，通过位移躲避随机障碍物并穿过得分门的无尽地图游戏。</p>
+                <div>
+                    <span class="badge">Unity 3D/C#</span><span class="badge">PCG 生成</span><span class="badge">物理引擎</span><span class="badge">UGUI</span>
+                </div>
+                <h4>⚙️ 核心架构与逻辑拆解</h4>
+                <ul>
+                    <li><strong>程序化网格生成与性能优化：</strong>运用柏林噪声算法与三角函数，在运行时动态计算顶点与三角形索引，纯代码构建高低起伏的地形网格 (Mesh)。设计基于“双地图块滑动窗口”的动态拼接机制，实现极低内存开销。</li>
+                    <li><strong>载具控制与核心玩法闭环：</strong>独立编写 Car 核心控制器脚本，实现响应迅速的转向逻辑。设计基于极坐标系的障碍物随机生成算法，实现动态递增难度曲线与计分机制。</li>
+                    <li><strong>物理系统与视觉反馈：</strong>深度集成 WheelCollider，处理高拟真碰撞检测与翻车解体判定。结合 Raycast 实时判定地形材质触发打滑、扬尘粒子特效 (Particle System) 及音效。</li>
+                    <li><strong>UI 架构与动画：</strong>基于 UGUI 构建双场景交互框架，运用 Animator 状态机驱动 UI 面板的平滑过渡与动态反馈演出。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-fb" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-fb')">&times;</span>
+            <div class="modal-left">
+                <div id="player-fb" class="player-container"></div>
+            </div>
+            <div class="modal-right">
+                <h2>《Flappy Bird 重构版》</h2>
+                <p><strong>项目描述：</strong>一款经典的 2D 侧翻滚无尽飞行游戏，核心亮点在于引入 xLua 框架对原生 C# 玩法进行了全面重构，实现了“C# 底层稳定承载 + Lua 业务热更”的混合编程架构。</p>
+                <div>
+                    <span class="badge">Unity 2D</span><span class="badge">C# / Lua 混合编程</span><span class="badge">xLua 热更框架</span><span class="badge">DOTween</span><span class="badge">对象池优化</span>
+                </div>
+                <h4>⚙️ 核心架构与逻辑拆解</h4>
+                <ul>
+                    <li><strong>xLua 混合架构与生命周期接管：</strong>设计并实现 WidgetLuaBehaviour 通用承载组件。通过 Inspector 依赖注入，完成 C# 引用类型向 Lua 虚拟机的零开销映射。接管并转发 Unity 原生生命周期，为每个挂载对象开辟独立的 LuaTable 作用域，彻底解耦底层框架与上层玩法。</li>
+                    <li><strong>核心 3C 与视觉表现的 Lua 化重构：</strong>摒弃 Unity 原生物理组件，在 Lua 端运用纯代码计算欧拉积分，精准模拟重力下坠与点击上抛的物理反馈。引入 DOTween 替代原生协程，在 Lua 侧处理序列帧动画与定时器，兼顾了开发的灵活性与平滑的视觉表现。</li>
+                    <li><strong>Lua 端对象池与性能防抖：</strong>针对无尽生成的管道障碍物，在 Lua 侧独立构建了轻量级的数组缓存池 (Object Pool)。通过状态切换接管高频的 Instantiate/Destroy 操作，大幅规避了跨语言边界下产生的 GC 峰值，保障了跨设备运行的帧率稳定性。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 定义全局变量存储播放器实例
+        let playerYD = null;
+        let playerYS = null;
+        let playerFB = null;
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+            document.body.style.overflow = 'hidden'; // 阻止底层滚动
+
+            // ============== 在这里填入你的多吉云 vcode ==============
+            // 只要弹窗打开且播放器未初始化，就会自动加载视频
+            if (id === 'modal-yd' && !playerYD) {
+                playerYD = new DogePlayer({
+                    container: document.getElementById('player-yd'),
+                    userId: 14972,
+                    vcode: 'bbc9ace1fa3d804d',  // <--- 修改这里
+                    autoPlay: false
+                });
+            } else if (id === 'modal-ys' && !playerYS) {
+                playerYS = new DogePlayer({
+                    container: document.getElementById('player-ys'),
+                    userId: 14972,
+                    vcode: 'c427d142eb70b50f',   // <--- 修改这里
+                    autoPlay: false
+                });
+            } else if (id === 'modal-fb' && !playerFB) {
+                playerFB = new DogePlayer({
+                    container: document.getElementById('player-fb'),
+                    userId: 14972,
+                    vcode: '53d7c44481ae7f9a', // <--- 修改这里
+                    autoPlay: false
+                });
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }, 300);
+
+            // 关闭弹窗时暂停视频
+            if (id === 'modal-yd' && playerYD) playerYD.pause();
+            if (id === 'modal-ys' && playerYS) playerYS.pause();
+            if (id === 'modal-fb' && playerFB) playerFB.pause();
+        }
+
+        // 点击背景关闭弹窗
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target.id);
+            }
+        }
+
+        // ================== 粒子星空背景连线特效 ==================
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray = [];
+        const numberOfParticles = 100;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = (Math.random() * 1 - 0.5);
+                this.speedY = (Math.random() * 1 - 0.5);
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.size > 0.2) this.size -= 0.01;
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(14, 165, 233, 0.8)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            for (let i = 0; i < numberOfParticles; i++) {
+                particlesArray.push(new Particle());
+            }
+        }
+
+        function connect() {
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                        + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    if (distance < (canvas.width / 10) * (canvas.height / 10)) {
+                        let opacityValue = 1 - (distance / 20000);
+                        ctx.strokeStyle = 'rgba(14, 165, 233,' + opacityValue + ')';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+            }
+            connect();
+        }
+
+        window.addEventListener('resize', function () {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+
 </html>
