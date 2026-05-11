@@ -55,9 +55,8 @@
         .project-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(10px); display: flex; flex-direction: column; }
         .project-card:hover { transform: scale(1.03); border-color: var(--primary); box-shadow: 0 0 40px var(--primary-glow); }
         
-        /* 注意：这里加入了背景图片样式的兼容 */
+        /* 删除了之前的 ::after 半透明文字，让封面更干净 */
         .project-cover { height: 200px; background: linear-gradient(45deg, #0f172a, #1e293b); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .project-cover::after { content: "▶ CLICK TO EXPLORE"; font-weight: bold; color: rgba(255, 255, 255, 0.3); letter-spacing: 2px; }
         
         .project-info { padding: 25px; }
         .project-info h3 { font-size: 1.5rem; margin-bottom: 10px; color: var(--text-main); }
@@ -70,7 +69,6 @@
         .modal.show .modal-content { transform: scale(1); }
         
         .modal-left { flex: 1.2; padding: 30px; background: #0b1120; border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; }
-        /* 播放器容器的基础样式 */
         .player-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); border: 1px solid #333; }
         
         .modal-right { flex: 1; padding: 40px; overflow-y: auto; }
@@ -140,7 +138,7 @@
             <div class="project-grid">
                 
                 <div class="project-card" onclick="openModal('modal-yd')">
-                    <div class="project-cover"style="background-image: url('img/VC.png'); background-size: cover; background-position: center;"></div>
+                    <div class="project-cover" style="background-image: url('img/VC.png'); background-size: cover; background-position: center;"></div>
                     <div class="project-info">
                         <h3>《跃动嘉年华》</h3>
                         <p class="project-desc">3D 第三人称派对闯关游戏。基于物理引擎与状态机驱动，打造极致 3C 体验。</p>
@@ -152,7 +150,7 @@
                 </div>
 
                 <div class="project-card" onclick="openModal('modal-ys')">
-                    <div class="project-cover"style="background-image: url('img/MTS.png'); background-size: cover; background-position: center;"></div>
+                    <div class="project-cover" style="background-image: url('img/MTS.png'); background-size: cover; background-position: center;"></div>
                     <div class="project-info">
                         <h3>《月隧穿梭》</h3>
                         <p class="project-desc">极低内存开销的无尽地图驾驶游戏。运用运行时顶点计算实现程序化地形生成。</p>
@@ -171,6 +169,30 @@
                         <div>
                             <span class="badge">xLua 热更框架</span>
                             <span class="badge">C# / Lua 混合编程</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" onclick="openModal('modal-ai')">
+                    <div class="project-cover" style="background-image: url('img/ai.png'); background-size: cover; background-position: center;"></div>
+                    <div class="project-info">
+                        <h3>《AI 赋能极速小游戏全链路》</h3>
+                        <p class="project-desc">一款基于 CPA + CCswitch + Codex 协同工作流构建的经典休闲游戏合集。</p>
+                        <div>
+                            <span class="badge">AI-Driven Workflow</span>
+                            <span class="badge">Prompt Engineering</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" onclick="openModal('modal-gf')">
+                    <div class="project-cover" style="background-image: url('img/GFW.png'); background-size: cover; background-position: center;"></div>
+                    <div class="project-info">
+                        <h3>《模块化 UI 业务系统探索》</h3>
+                        <p class="project-desc">基于 GameFramework (GF) 框架开发的通用 UI 活动套件，涵盖核心业务模块。</p>
+                        <div>
+                            <span class="badge">GameFramework</span>
+                            <span class="badge">MVC 架构</span>
                         </div>
                     </div>
                 </div>
@@ -246,40 +268,104 @@
         </div>
     </div>
 
+    <div id="modal-ai" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-ai')">&times;</span>
+            <div class="modal-left">
+                <div id="player-ai" class="player-container"></div>
+            </div>
+            <div class="modal-right">
+                <h2>《AI 赋能：极速小游戏全链路开发实践》</h2>
+                <p><strong>项目描述：</strong>一款基于 CPA + CCswitch + Codex 协同工作流构建的经典休闲游戏合集（含 2048、合成大西瓜、三消类）。该项目旨在探索 AI 在游戏原型快速迭代中的极限效能，通过 AI 辅助生成 100% 的核心代码与美术资产。</p>
+                <div>
+                    <span class="badge">Unity</span><span class="badge">AI-Driven Workflow (CPA / Codex)</span><span class="badge">C#</span><span class="badge">UGUI</span><span class="badge">Prompt Engineering</span><span class="badge">模块化架构</span>
+                </div>
+                <h4>⚙️ 核心架构与逻辑拆解</h4>
+                <ul>
+                    <li><strong>AI 协同开发流构建与 Prompt 优化：</strong>深度整合 CPA + CCswitch + Codex 生产链路，通过高精度的 Prompt Engineering 实现复杂游戏逻辑（如 2048 数值合并算法、合成大西瓜物理堆叠判定、三消矩阵消除逻辑）的自动化生成。将开发重心由底层编码转向架构定义与 AI 代码审查，显著提升原型产出效率。</li>
+                    <li><strong>高度解耦的游戏合集架构设计：</strong>针对多游戏场景，设计了基于 Assets/Games 的分层资源隔离体系，确保脚本、预制体与 UI 资源在物理存储与逻辑依赖上的完全解耦。通过主菜单 (MainMenu) 中心化控制逻辑，实现多异质场景间的平滑切换与公共资源共享。</li>
+                    <li><strong>AI 生成内容的工程化落地与调优：</strong>负责 AI 脚本在 Unity 运行环境下的逻辑挂载、组件序列化映射及 UI 适配工作。针对 AI 生成的代码进行健壮性测试与性能热点分析，手动调优物理引擎参数与事件响应机制，确保 AI 产出内容达到商业级运行稳定性。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-gf" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modal-gf')">&times;</span>
+            <div class="modal-left">
+                <div id="player-gf" class="player-container"></div>
+            </div>
+            <div class="modal-right">
+                <h2>《模块化 UI 业务系统探索》</h2>
+                <p><strong>项目描述：</strong>基于 GameFramework (GF) 框架开发的通用 UI 活动套件，涵盖签到、抽奖、战令及背包等核心业务模块。</p>
+                <div>
+                    <span class="badge">GameFramework</span><span class="badge">MVC 架构</span><span class="badge">C#</span><span class="badge">事件系统 (Event)</span><span class="badge">引用池 (Reference Pool)</span><span class="badge">单例模式</span>
+                </div>
+                <h4>⚙️ 核心架构与逻辑拆解</h4>
+                <ul>
+                    <li><strong>UI 架构搭建与 MVC 实践：</strong>深度应用 GF UI 组件，基于 MVC 模式实现逻辑、数据与显示的严格分离。通过自定义 UIForm 窗体生命周期管理，规范了 UI 逻辑层的打开、轮询及关闭流程，极大地提升了系统可维护性。</li>
+                    <li><strong>复杂业务逻辑实现：</strong>独立设计并开发了 7 日签到、转盘抽奖及 BattlePass 战令系统。采用配置表驱动设计（Data-Driven），通过统一的逻辑控制器处理多重奖励判定与状态同步，确保了业务逻辑的健壮性。</li>
+                    <li><strong>高性能背包系统与引用池：</strong>针对背包中高频生成的物品格，运用 GF 引用池 (Reference Pool) 技术进行对象管理，有效规避了频繁 Instantiate 带来的内存抖动，并配合事件中心实现背包数据与 UI 的异步解耦刷新。</li>
+                    <li><strong>架构优化与解耦设计：</strong>灵活运用单例模式维护全局数据中心，并利用 GF 事件系统实现各个活动模块间的“零耦合”通信。通过接口隔离与引用回收机制，显著降低了各功能模块间的依赖复杂度。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 定义全局变量存储播放器实例
         let playerYD = null;
         let playerYS = null;
         let playerFB = null;
+        let playerAI = null;
+        let playerGF = null;
 
         function openModal(id) {
             const modal = document.getElementById(id);
             modal.style.display = 'flex';
             setTimeout(() => modal.classList.add('show'), 10);
-            document.body.style.overflow = 'hidden'; // 阻止底层滚动
+            document.body.style.overflow = 'hidden';
 
-            // ============== 在这里填入你的多吉云 vcode ==============
-            // 只要弹窗打开且播放器未初始化，就会自动加载视频
+            // 动态挂载多吉云播放器，并且顺带设置 poster 属性（利用之前上传好的图片直接占位视频封面）
             if (id === 'modal-yd' && !playerYD) {
                 playerYD = new DogePlayer({
                     container: document.getElementById('player-yd'),
                     userId: 14972,
-                    vcode: 'bbc9ace1fa3d804d',  // <--- 修改这里
-                    autoPlay: false
+                    vcode: 'bbc9ace1fa3d804d',
+                    autoPlay: false,
+                    poster: 'img/VC.png'
                 });
             } else if (id === 'modal-ys' && !playerYS) {
                 playerYS = new DogePlayer({
                     container: document.getElementById('player-ys'),
                     userId: 14972,
-                    vcode: 'c427d142eb70b50f',   // <--- 修改这里
-                    autoPlay: false
+                    vcode: 'c427d142eb70b50f',
+                    autoPlay: false,
+                    poster: 'img/MTS.png'
                 });
             } else if (id === 'modal-fb' && !playerFB) {
                 playerFB = new DogePlayer({
                     container: document.getElementById('player-fb'),
                     userId: 14972,
-                    vcode: '53d7c44481ae7f9a', // <--- 修改这里
-                    autoPlay: false
+                    vcode: '53d7c44481ae7f9a',
+                    autoPlay: false,
+                    poster: 'img/bird.png'
+                });
+            } else if (id === 'modal-ai' && !playerAI) {
+                playerAI = new DogePlayer({
+                    container: document.getElementById('player-ai'),
+                    userId: 14972,
+                    vcode: 'a9e1806d28bc0a43',
+                    autoPlay: false,
+                    poster: 'img/ai.png'
+                });
+            } else if (id === 'modal-gf' && !playerGF) {
+                playerGF = new DogePlayer({
+                    container: document.getElementById('player-gf'),
+                    userId: 14972,
+                    vcode: '5f85a33c3ce555f4',
+                    autoPlay: false,
+                    poster: 'img/GFW.png'
                 });
             }
         }
@@ -292,13 +378,14 @@
                 document.body.style.overflow = 'auto';
             }, 300);
 
-            // 关闭弹窗时暂停视频
+            // 关闭弹窗时暂停对应视频
             if (id === 'modal-yd' && playerYD) playerYD.pause();
             if (id === 'modal-ys' && playerYS) playerYS.pause();
             if (id === 'modal-fb' && playerFB) playerFB.pause();
+            if (id === 'modal-ai' && playerAI) playerAI.pause();
+            if (id === 'modal-gf' && playerGF) playerGF.pause();
         }
 
-        // 点击背景关闭弹窗
         window.onclick = function (event) {
             if (event.target.classList.contains('modal')) {
                 closeModal(event.target.id);
