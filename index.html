@@ -7,121 +7,306 @@
     <title>Larry / Rei - 游戏客户端开发</title>
     <script type="text/javascript" src="https://player.dogecloud.com/js/loader"></script>
     <style>
-        /* ================= 核心变量与重置 ================= */
+        /* ============ 核心变量 ============ */
         :root {
-            --bg-color: #030712;
-            --primary: #0ea5e9;
-            --primary-glow: rgba(14, 165, 233, 0.5);
-            --secondary: #10b981;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg: #05070d;
+            --panel: rgba(13, 18, 30, 0.72);
+            --line: rgba(148, 163, 184, 0.14);
+            --cyan: #22d3ee;
+            --cyan-glow: rgba(34, 211, 238, 0.45);
+            --violet: #a78bfa;
+            --green: #34d399;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --mono: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html { scroll-behavior: smooth; }
+
         body {
-            background-color: var(--bg-color); color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow-x: hidden; line-height: 1.6;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        /* ================= 动态背景画布 ================= */
-        #particle-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.6; pointer-events: none; }
+        /* ============ 背景层：网格 + 粒子 + 扫描线 ============ */
+        #particle-canvas { position: fixed; inset: 0; z-index: 0; opacity: 0.7; pointer-events: none; }
 
-        /* ================= 布局与容器 ================= */
-        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
-        section { margin-bottom: 80px; animation: fadeInUp 1s ease-out forwards; opacity: 0; transform: translateY(30px); }
-        .section-title { font-size: 2rem; color: var(--text-main); margin-bottom: 30px; border-left: 4px solid var(--primary); padding-left: 15px; text-shadow: 0 0 10px var(--primary-glow); }
+        .grid-bg {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background-image:
+                linear-gradient(var(--line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--line) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+        }
 
-        /* ================= Hero 头部 ================= */
-        .hero { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
-        .hero h1 { font-size: 5rem; margin-bottom: 10px; font-weight: 800; letter-spacing: -2px; }
-        .hero h1 span { background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .typewriter { font-size: 1.5rem; color: var(--text-muted); font-family: monospace; border-right: 2px solid var(--primary); white-space: nowrap; overflow: hidden; animation: typing 3s steps(30, end), blink-caret .75s step-end infinite; }
+        .scanlines {
+            position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.35;
+            background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(255, 255, 255, 0.012) 3px 4px);
+            animation: scan-drift 10s linear infinite;
+        }
+        @keyframes scan-drift { from { background-position-y: 0; } to { background-position-y: 100px; } }
 
-        /* ================= 个人大盘 (Stats Grid) ================= */
-        .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .bento-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 25px; backdrop-filter: blur(12px); transition: all 0.3s ease; position: relative; overflow: hidden; }
-        .bento-card:hover { transform: translateY(-5px); border-color: var(--primary-glow); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-        .bento-card h3 { color: var(--primary); font-size: 1.2rem; margin-bottom: 15px; }
-        .badge { display: inline-block; padding: 4px 10px; background: rgba(16, 185, 129, 0.1); color: var(--secondary); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 20px; font-size: 0.85rem; margin: 0 5px 10px 0; }
-        .honor-list li { margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; }
-        .honor-list li::before { content: "🏆"; margin-right: 10px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 28px; position: relative; z-index: 2; }
 
-        /* ================= 项目卡片 ================= */
-        .project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; }
-        .project-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(10px); display: flex; flex-direction: column; }
-        .project-card:hover { transform: scale(1.03); border-color: var(--primary); box-shadow: 0 0 40px var(--primary-glow); }
-        
-        /* 删除了之前的 ::after 半透明文字，让封面更干净 */
-        .project-cover { height: 200px; background: linear-gradient(45deg, #0f172a, #1e293b); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        
-        .project-info { padding: 25px; }
-        .project-info h3 { font-size: 1.5rem; margin-bottom: 10px; color: var(--text-main); }
-        .project-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px; }
+        /* ============ 顶部导航 ============ */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 40px;
+            background: rgba(5, 7, 13, 0.65);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--line);
+        }
+        .logo { font-family: var(--mono); font-size: 1.25rem; font-weight: 800; letter-spacing: 2px; }
+        .logo span { color: var(--cyan); text-shadow: 0 0 12px var(--cyan-glow); }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a {
+            color: var(--muted); text-decoration: none; font-family: var(--mono);
+            font-size: 0.85rem; letter-spacing: 1px; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--cyan); text-shadow: 0 0 8px var(--cyan-glow); }
+        .nav-status { font-family: var(--mono); font-size: 0.8rem; color: var(--green); letter-spacing: 1px; }
+        .nav-status::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 8px; box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+        @keyframes pulse { 50% { opacity: 0.3; } }
 
-        /* ================= 华丽双栏弹窗 ================= */
-        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); opacity: 0; transition: opacity 0.3s; }
-        .modal.show { display: flex; opacity: 1; align-items: center; justify-content: center; }
-        .modal-content { background: #0f172a; width: 90%; max-width: 1200px; max-height: 85vh; border-radius: 24px; border: 1px solid var(--primary-glow); overflow: hidden; display: flex; flex-direction: row; box-shadow: 0 0 60px rgba(14, 165, 233, 0.2); transform: scale(0.95); transition: transform 0.3s; }
-        .modal.show .modal-content { transform: scale(1); }
-        
-        .modal-left { flex: 1.2; padding: 30px; background: #0b1120; border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; }
-        .player-container { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); border: 1px solid #333; }
-        /* 未录制视频时的图片占位：图片铺满 + 底部一行说明 */
-        .video-pending { background-size: cover; background-position: center; position: relative; }
-        .video-pending::after { content: "📹 视频尚未录制 / 正在录制中"; position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.75); color: #e2e8f0; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; border: 1px solid var(--glass-border); white-space: nowrap; }
-        
-        .modal-right { flex: 1; padding: 40px; overflow-y: auto; }
-        .modal-right h2 { color: var(--primary); font-size: 2rem; margin-bottom: 10px; }
-        .modal-right h4 { color: #fff; margin: 25px 0 15px 0; font-size: 1.2rem; border-bottom: 1px solid #333; padding-bottom: 8px; }
-        .modal-right p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px; }
-        .modal-right ul { padding-left: 20px; color: #cbd5e1; }
-        .modal-right li { margin-bottom: 12px; line-height: 1.6; }
-        .modal-right li strong { color: var(--secondary); }
-        .close-btn { position: absolute; top: 20px; right: 30px; font-size: 30px; color: #888; cursor: pointer; transition: color 0.2s; z-index: 10; }
-        .close-btn:hover { color: #fff; }
-
-        @media (max-width: 900px) { .modal-content { flex-direction: column; overflow-y: auto; } .modal-left { border-right: none; border-bottom: 1px solid var(--glass-border); } }
+        /* ============ Hero ============ */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 120px 0 60px; }
+        .hero-tag { font-family: var(--mono); color: var(--green); font-size: 0.95rem; letter-spacing: 2px; margin-bottom: 20px; }
+        .hero-tag::before { content: "> "; }
+        .hero h1 {
+            font-size: clamp(3.5rem, 10vw, 7.5rem); font-weight: 900; letter-spacing: -3px; line-height: 1.05;
+            text-transform: uppercase;
+        }
+        .hero h1 span {
+            background: linear-gradient(120deg, var(--cyan), var(--violet));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 25px var(--cyan-glow));
+        }
+        .typewriter {
+            font-family: var(--mono); font-size: 1.4rem; color: var(--muted); margin: 20px 0 8px;
+            border-right: 2px solid var(--cyan); white-space: nowrap; overflow: hidden;
+            animation: typing 2.5s steps(22, end), blink-caret 0.75s step-end infinite;
+        }
         @keyframes typing { from { width: 0 } to { width: 100% } }
         @keyframes blink-caret { 50% { border-color: transparent } }
-        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        .hero-sub { color: var(--muted); font-size: 1rem; margin-bottom: 40px; }
+        .hero-cta { display: flex; gap: 16px; flex-wrap: wrap; }
+        .btn {
+            display: inline-block; padding: 13px 30px; border-radius: 8px; text-decoration: none;
+            font-family: var(--mono); font-size: 0.95rem; letter-spacing: 1px; transition: all 0.25s;
+        }
+        .btn-primary {
+            background: linear-gradient(120deg, var(--cyan), #0ea5e9); color: #04121a; font-weight: 700;
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.35);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 45px rgba(34, 211, 238, 0.6); }
+        .btn-ghost { border: 1px solid var(--line); color: var(--text); }
+        .btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+
+        /* ============ 通用 Section ============ */
+        section.block { padding: 100px 0; }
+        .sec-head { margin-bottom: 45px; }
+        .sec-no { font-family: var(--mono); color: var(--cyan); font-size: 0.9rem; letter-spacing: 2px; display: block; margin-bottom: 8px; }
+        .sec-title { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; }
+        .sec-title .cursor { color: var(--cyan); }
+
+        /* ============ Info 仪表盘卡 ============ */
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+        .info-card {
+            background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 26px;
+            backdrop-filter: blur(10px); transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .info-card::before {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--cyan), var(--violet)); opacity: 0.6;
+        }
+        .info-card:hover { transform: translateY(-4px); border-color: var(--cyan-glow); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); }
+        .info-card h3 { font-family: var(--mono); color: var(--cyan); font-size: 1rem; margin-bottom: 18px; letter-spacing: 1px; }
+        .info-card .big { font-size: 1.5rem; font-weight: 800; color: #fff; }
+        .info-card .sub { color: var(--muted); font-size: 0.95rem; }
+        .info-card .gpa { margin-top: 12px; color: var(--green); font-weight: 700; }
+        .honor-list { list-style: none; }
+        .honor-list li { margin-bottom: 12px; font-size: 0.95rem; color: #cbd5e1; display: flex; gap: 10px; align-items: baseline; }
+        .honor-list li::before { content: "▸"; color: var(--green); }
+        .badge {
+            display: inline-block; padding: 4px 12px; margin: 0 6px 8px 0; border-radius: 6px;
+            background: rgba(34, 211, 238, 0.08); color: var(--cyan);
+            border: 1px solid rgba(34, 211, 238, 0.22); font-size: 0.82rem;
+        }
+
+        /* ============ 项目海报墙（横向滚动） ============ */
+        .gallery-wrap { position: relative; }
+        .gallery {
+            display: flex; gap: 26px; overflow-x: auto; padding: 20px 6px 30px;
+            scroll-snap-type: x mandatory; scrollbar-width: none;
+        }
+        .gallery::-webkit-scrollbar { display: none; }
+
+        .poster {
+            flex: 0 0 auto; width: 500px; aspect-ratio: 4 / 3; border-radius: 16px;
+            position: relative; overflow: hidden; cursor: pointer;
+            border: 1px solid var(--line); scroll-snap-align: start;
+            background: #0b1120; transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .poster img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .poster:hover { transform: translateY(-8px) scale(1.03); border-color: var(--cyan); box-shadow: 0 0 45px var(--cyan-glow); }
+        .poster:hover img { transform: scale(1.1); }
+        .poster-overlay {
+            position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+            padding: 20px; background: linear-gradient(to top, rgba(3, 6, 14, 0.95) 8%, rgba(3, 6, 14, 0.35) 45%, transparent 70%);
+        }
+        .poster-idx { font-family: var(--mono); color: var(--cyan); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 6px; }
+        .poster-overlay h3 { font-size: 1.25rem; font-weight: 800; margin-bottom: 8px; }
+        .poster-tags { color: var(--muted); font-size: 0.82rem; line-height: 1.5; }
+        .poster-play {
+            position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 50%;
+            background: rgba(3, 6, 14, 0.7); border: 1px solid var(--line); color: var(--cyan);
+            display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+            backdrop-filter: blur(6px);
+        }
+        .poster-play.pending { color: var(--muted); font-size: 0.65rem; letter-spacing: 0; }
+
+        .gallery-btn {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
+            width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
+            background: rgba(5, 7, 13, 0.75); color: var(--text); font-size: 1.1rem; cursor: pointer;
+            backdrop-filter: blur(8px); transition: all 0.2s;
+        }
+        .gallery-btn:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 20px var(--cyan-glow); }
+        .gallery-btn.prev { left: -14px; }
+        .gallery-btn.next { right: -14px; }
+
+        /* ============ 详情弹窗 ============ */
+        .modal {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(2, 4, 10, 0.88); backdrop-filter: blur(18px);
+            align-items: center; justify-content: center; padding: 30px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: #0a0f1c; width: 100%; max-width: 1180px; max-height: 88vh;
+            border-radius: 20px; border: 1px solid rgba(34, 211, 238, 0.35);
+            box-shadow: 0 0 80px rgba(34, 211, 238, 0.15);
+            display: flex; overflow: hidden; animation: modal-in 0.3s ease;
+        }
+        @keyframes modal-in { from { opacity: 0; transform: scale(0.94) translateY(16px); } to { opacity: 1; transform: none; } }
+        .modal-media { flex: 1.15; background: #050810; display: flex; align-items: center; justify-content: center; padding: 26px; }
+        .player-box {
+            width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden;
+            border: 1px solid #2b3a55; background: #0b1120;
+        }
+        .video-pending { background-size: cover; background-position: center; position: relative; }
+        .video-pending::after {
+            content: "📹 视频尚未录制 / 正在录制中"; position: absolute; bottom: 14px; left: 50%;
+            transform: translateX(-50%); background: rgba(0, 0, 0, 0.75); color: #cbd5e1;
+            padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; white-space: nowrap;
+            border: 1px solid var(--line);
+        }
+        .modal-body { flex: 1; padding: 36px 40px; overflow-y: auto; }
+        .modal-idx { font-family: var(--mono); color: var(--cyan); font-size: 0.8rem; letter-spacing: 2px; }
+        .modal-body h2 { font-size: 2rem; margin: 8px 0 14px; }
+        .modal-desc { color: var(--muted); font-size: 0.95rem; margin-bottom: 16px; }
+        .modal-body h4 {
+            color: #fff; margin: 26px 0 14px; font-size: 1.05rem; padding-bottom: 8px;
+            border-bottom: 1px solid var(--line); font-family: var(--mono);
+        }
+        .modal-body ul { padding-left: 4px; list-style: none; color: #cbd5e1; }
+        .modal-body li { margin-bottom: 12px; line-height: 1.65; font-size: 0.92rem; padding-left: 18px; position: relative; }
+        .modal-body li::before { content: "▸"; position: absolute; left: 0; color: var(--cyan); }
+        .modal-body li strong { color: var(--green); }
+        .close-btn {
+            position: absolute; top: 16px; right: 20px; width: 42px; height: 42px; border-radius: 50%;
+            border: 1px solid var(--line); background: rgba(5, 7, 13, 0.8); color: #94a3b8;
+            font-size: 1.1rem; cursor: pointer; z-index: 10; transition: all 0.2s;
+        }
+        .close-btn:hover { color: #fff; border-color: var(--cyan); box-shadow: 0 0 18px var(--cyan-glow); }
+
+        /* ============ Footer ============ */
+        footer { border-top: 1px solid var(--line); padding: 50px 0; margin-top: 40px; }
+        .footer-grid { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: center; }
+        .footer-item { font-family: var(--mono); font-size: 0.9rem; color: var(--muted); }
+        .footer-item span { color: var(--cyan); margin-right: 8px; }
+
+        /* ============ 入场动画 ============ */
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .reveal.visible { opacity: 1; transform: none; }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 900px) {
+            nav { padding: 14px 20px; }
+            .nav-links { gap: 16px; }
+            .nav-status { display: none; }
+            .modal-content { flex-direction: column; max-height: 94vh; }
+            .modal-body { padding: 24px; }
+            .gallery-btn { display: none; }
+            .poster { width: 86vw; }
+        }
     </style>
 </head>
 
 <body>
 
+    <div class="grid-bg"></div>
+    <div class="scanlines"></div>
     <canvas id="particle-canvas"></canvas>
 
+    <!-- ============ 导航 ============ -->
+    <nav>
+        <div class="logo">LARRY<span>/</span>REI</div>
+        <div class="nav-links">
+            <a href="#home">HOME</a>
+            <a href="#info">INFO</a>
+            <a href="#projects">PROJECTS</a>
+            <a href="#contact">CONTACT</a>
+        </div>
+        <div class="nav-status">OPEN TO WORK</div>
+    </nav>
+
     <div class="container">
-        <section class="hero" style="animation-delay: 0.1s;">
-            <h1>Larry / <span>Rei</span></h1>
+
+        <!-- ============ Hero ============ -->
+        <section id="home" class="hero">
+            <p class="hero-tag">SYSTEM BOOT ... OK</p>
+            <h1>Larry <span>/</span> Rei</h1>
             <div class="typewriter">>>> 游戏客户端开发_</div>
+            <p class="hero-sub">东莞理工学院 · 计算机科学与技术 · 大四在读</p>
+            <div class="hero-cta">
+                <a href="#projects" class="btn btn-primary">▶ 查看作品集</a>
+                <a href="#info" class="btn btn-ghost">查看个人档案</a>
+            </div>
         </section>
 
-        <section style="animation-delay: 0.3s;">
-            <h2 class="section-title">System.Info()</h2>
-            <div class="bento-grid">
-                <div class="bento-card">
+        <!-- ============ Info ============ -->
+        <section id="info" class="block">
+            <div class="sec-head">
+                <span class="sec-no">01 // SYSTEM.INFO()</span>
+                <h2 class="sec-title">个人档案<span class="cursor">_</span></h2>
+            </div>
+            <div class="info-grid reveal">
+                <div class="info-card">
                     <h3>[ 教育背景 ]</h3>
-                    <p style="font-size:1.5rem; font-weight:bold; color:#fff;">计算机科学与技术</p>
-                    <p style="font-size:1rem; color:var(--text-muted);">东莞理工学院</p>
-                    <p style="font-size:1rem; color:var(--text-muted);">大四在读</p>
-                    <p style="margin-top:10px; color:var(--secondary);">GPA: 3.71 / 4.0 (专业前 5%)</p>
-                    <p style="color:var(--text-muted); font-size:0.9rem;">两次获得校内奖学金</p>
+                    <p class="big">计算机科学与技术</p>
+                    <p class="sub">东莞理工学院</p>
+                    <p class="sub">大四在读</p>
+                    <p class="gpa">GPA: 3.71 / 4.0 (专业前 5%)</p>
+                    <p class="sub">两次获得校内奖学金</p>
                 </div>
-                <div class="bento-card">
+                <div class="info-card">
                     <h3>[ 做过的事 ]</h3>
-                    <ul class="honor-list" style="list-style: none; padding:0;">
-                        <li>蓝桥杯 C++软件B组 (省二等奖) 2025</li>
+                    <ul class="honor-list">
+                        <li>蓝桥杯 C++软件B组 (省二等奖) </li>
                         <li>GGJ 2026 X CiGA 中国区 -- 广州南沙站线下通关</li>
-                        <li>未来设计师 NCDA 大赛 (国赛二等奖) 2026</li>
+                        <li>未来设计师 NCDA 大赛 (国赛二等奖) </li>
                         <li>英语 CET-6 | C1 驾照</li>
                     </ul>
                 </div>
-                <div class="bento-card">
+                <div class="info-card">
                     <h3>[ 技术栈 ]</h3>
                     <div>
                         <span class="badge">C++ / C# OOP</span>
@@ -136,98 +321,109 @@
             </div>
         </section>
 
-        <section style="animation-delay: 0.5s;">
-            <h2 class="section-title">Execute.Projects()</h2>
-            <div class="project-grid">
+        <!-- ============ Projects ============ -->
+        <section id="projects" class="block">
+            <div class="sec-head">
+                <span class="sec-no">02 // EXECUTE.PROJECTS()</span>
+                <h2 class="sec-title">作品集<span class="cursor">_</span></h2>
+            </div>
+            <div class="gallery-wrap">
+                <button class="gallery-btn prev" onclick="scrollGallery(-1)">‹</button>
+                <button class="gallery-btn next" onclick="scrollGallery(1)">›</button>
+                <div class="gallery" id="gallery">
 
-                <div class="project-card" onclick="openModal('modal-tf')">
-                    <div class="project-cover" style="background-image: url('img/TinyFrameWork.png'); background-size: cover; background-position: center;"></div>
-                    <div class="project-info">
-                        <h3>《TinyCore Framework 自制框架》</h3>
-                        <p class="project-desc">独立自研的 Unity 通用底层基建框架，涵盖泛型单例、事件总线、对象池等 9 大模块，AI Agent 协同开发。</p>
-                        <div>
-                            <span class="badge">UI 框架</span>
-                            <span class="badge">事件总线</span>
-                            <span class="badge">Addressables</span>
-                            <span class="badge">AI Agent 协同</span>
+                    <article class="poster" onclick="openModal('modal-tf')">
+                        <img src="img/TinyFrameWork.png" alt="TinyCore Framework">
+                        <span class="poster-play pending">待录制</span>
+                        <div class="poster-overlay">
+                            <span class="poster-idx">001</span>
+                            <h3>《TinyCore Framework 自制框架 & UI实现》</h3>
+                            <p class="poster-tags">UI 框架 · 事件总线 · Addressables · AI Agent 协同</p>
                         </div>
-                    </div>
-                </div>
+                    </article>
 
-                <div class="project-card" onclick="openModal('modal-sat')">
-                    <div class="project-cover" style="background-image: url('img/SAT.png'); background-size: cover; background-position: center;"></div>
-                    <div class="project-info">
-                        <h3>《3D 凸体碰撞引擎（SAT + Burst）》</h3>
-                        <p class="project-desc">基于分离轴定理 (SAT) 的 3D 碰撞系统，结合 Burst + Job System 实现零 GC 的高性能碰撞计算。</p>
-                        <div>
-                            <span class="badge">SAT</span>
-                            <span class="badge">Burst / Job System</span>
-                            <span class="badge">HalfEdge</span>
+                    <article class="poster" onclick="openModal('modal-sat')">
+                        <img src="img/SAT.png" alt="SAT 碰撞引擎">
+                        <span class="poster-play pending">待录制</span>
+                        <div class="poster-overlay">
+                            <span class="poster-idx">002</span>
+                            <h3>《3D 凸体碰撞引擎（SAT + Burst）》</h3>
+                            <p class="poster-tags">SAT · HalfEdge · Burst · Job System</p>
                         </div>
-                    </div>
-                </div>
+                    </article>
 
-                <div class="project-card" onclick="openModal('modal-yd')">
-                    <div class="project-cover" style="background-image: url('img/VC.png'); background-size: cover; background-position: center;"></div>
-                    <div class="project-info">
-                        <h3>《跃动嘉年华》</h3>
-                        <p class="project-desc">3D 第三人称派对闯关游戏。基于物理引擎与状态机驱动，打造极致 3C 体验。</p>
-                        <div>
-                            <span class="badge">FSM 状态机</span>
-                            <span class="badge">Unity Input System</span>
+                    <article class="poster" onclick="openModal('modal-yd')">
+                        <img src="img/VC.png" alt="跃动嘉年华">
+                        <span class="poster-play">▶</span>
+                        <div class="poster-overlay">
+                            <span class="poster-idx">003</span>
+                            <h3>《跃动嘉年华》</h3>
+                            <p class="poster-tags">FSM 状态机 · Unity Input System · 3C</p>
                         </div>
-                    </div>
-                </div>
+                    </article>
 
-                <div class="project-card" onclick="openModal('modal-ys')">
-                    <div class="project-cover" style="background-image: url('img/MTS.png'); background-size: cover; background-position: center;"></div>
-                    <div class="project-info">
-                        <h3>《月隧穿梭》</h3>
-                        <p class="project-desc">极低内存开销的无尽地图驾驶游戏。运用运行时顶点计算实现程序化地形生成。</p>
-                        <div>
-                            <span class="badge">PCG 生成</span>
-                            <span class="badge">物理引擎</span>
+                    <article class="poster" onclick="openModal('modal-ys')">
+                        <img src="img/MTS.png" alt="月隧穿梭">
+                        <span class="poster-play">▶</span>
+                        <div class="poster-overlay">
+                            <span class="poster-idx">004</span>
+                            <h3>《月隧穿梭》</h3>
+                            <p class="poster-tags">PCG 生成 · 物理引擎 · WheelCollider</p>
                         </div>
-                    </div>
-                </div>
+                    </article>
 
-                <div class="project-card" onclick="openModal('modal-fb')">
-                    <div class="project-cover" style="background-image: url('img/bird.png'); background-size: cover; background-position: center;"></div>
-                    <div class="project-info">
-                        <h3>《Flappy Bird 重构版》</h3>
-                        <p class="project-desc">引入 xLua 框架全面重构，实现“C# 底层承载 + Lua 业务热更”的混合架构。</p>
-                        <div>
-                            <span class="badge">xLua 热更框架</span>
-                            <span class="badge">C# / Lua 混合编程</span>
+                    <article class="poster" onclick="openModal('modal-fb')">
+                        <img src="img/bird.png" alt="Flappy Bird 重构版">
+                        <span class="poster-play">▶</span>
+                        <div class="poster-overlay">
+                            <span class="poster-idx">005</span>
+                            <h3>《Flappy Bird 重构版》</h3>
+                            <p class="poster-tags">xLua 热更框架 · C# / Lua 混合编程</p>
                         </div>
-                    </div>
-                </div>
+                    </article>
 
-                <div class="project-card" onclick="openModal('modal-ai')">
-                    <div class="project-cover" style="background-image: url('img/ai.png'); background-size: cover; background-position: center;"></div>
-                    <div class="project-info">
-                        <h3>《AI 赋能极速小游戏全链路》</h3>
-                        <p class="project-desc">一款基于 CPA + CCswitch + Codex 协同工作流构建的经典休闲游戏合集。</p>
-                        <div>
-                            <span class="badge">AI-Driven Workflow</span>
-                            <span class="badge">Prompt Engineering</span>
+                    <article class="poster" onclick="openModal('modal-ai')">
+                        <img src="img/ai.png" alt="AI 赋能极速小游戏">
+                        <span class="poster-play">▶</span>
+                        <div class="poster-overlay">
+                            <span class="poster-idx">006</span>
+                            <h3>《AI 赋能极速小游戏全链路》</h3>
+                            <p class="poster-tags">AI-Driven Workflow · Prompt Engineering</p>
                         </div>
-                    </div>
-                </div>
+                    </article>
 
+                </div>
             </div>
         </section>
+
+        <!-- ============ Contact ============ -->
+        <section id="contact" class="block" style="padding-top: 40px;">
+            <div class="sec-head">
+                <span class="sec-no">03 // CONTACT</span>
+                <h2 class="sec-title">联系我<span class="cursor">_</span></h2>
+            </div>
+            <footer>
+                <div class="footer-grid">
+                    <div class="footer-item"><span>📱</span>13670373504</div>
+                    <div class="footer-item"><span>📧</span>505498660@qq.com</div>
+                    <div class="footer-item"><span>🌐</span>plaryrei.ccwu.cc</div>
+                </div>
+            </footer>
+        </section>
+
     </div>
 
+    <!-- ============ 详情弹窗：TinyCore ============ -->
     <div id="modal-tf" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modal-tf')">&times;</span>
-            <div class="modal-left">
-                <div class="player-container video-pending" style="background-image: url('img/TinyFrameWork.png');"></div>
+            <button class="close-btn" onclick="closeModal('modal-tf')">✕</button>
+            <div class="modal-media">
+                <div class="player-box video-pending" style="background-image: url('img/TinyFrameWork.png');"></div>
             </div>
-            <div class="modal-right">
-                <h2>《TinyCore Framework 自制框架》</h2>
-                <p><strong>项目描述：</strong>独立自研一套与业务无关、高内聚低耦合的 Unity 通用底层基建框架，涵盖泛型单例、类型安全事件总线、泛型对象池、双实现资源管理、双层 UI 框架、JSON 存档与编辑器工具链 9 大模块，通过 AI Agent 协同开发，本人主导架构设计与全量测试验证。</p>
+            <div class="modal-body">
+                <span class="modal-idx">PROJECT 001</span>
+                <h2>《TinyCore Framework 自制框架 & UI 活动业务落地》</h2>
+                <p class="modal-desc">独立自研一套与业务无关、高内聚低耦合的 Unity 通用底层基建框架并实现多个 UI 活动业务实例落地，涵盖泛型单例、类型安全事件总线、泛型对象池、双实现资源管理、双层 UI 框架、JSON 存档与编辑器工具链 9 大模块，通过 AI Agent 协同开发，本人主导架构设计与全量测试验证。</p>
                 <div>
                     <span class="badge">UI 框架业务</span><span class="badge">Addressables</span><span class="badge">AI Agent</span><span class="badge">观察者模式</span><span class="badge">对象池</span><span class="badge">SO 数据驱动</span><span class="badge">UI Toolkit</span>
                 </div>
@@ -243,15 +439,17 @@
         </div>
     </div>
 
+    <!-- ============ 详情弹窗：SAT ============ -->
     <div id="modal-sat" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modal-sat')">&times;</span>
-            <div class="modal-left">
-                <div class="player-container video-pending" style="background-image: url('img/SAT.png');"></div>
+            <button class="close-btn" onclick="closeModal('modal-sat')">✕</button>
+            <div class="modal-media">
+                <div class="player-box video-pending" style="background-image: url('img/SAT.png');"></div>
             </div>
-            <div class="modal-right">
+            <div class="modal-body">
+                <span class="modal-idx">PROJECT 002</span>
                 <h2>《3D 凸体碰撞引擎（SAT + Burst）》</h2>
-                <p><strong>项目描述：</strong>实现基于分离轴定理 (SAT) 的 3D 碰撞系统，支持任意凸多面体碰撞检测与多点接触生成，从 Unity Mesh 自动构建凸体数据，结合 Burst + Job System 实现零 GC 的高性能碰撞计算。</p>
+                <p class="modal-desc">实现基于分离轴定理 (SAT) 的 3D 碰撞系统，支持任意凸多面体碰撞检测与多点接触生成，从 Unity Mesh 自动构建凸体数据，结合 Burst + Job System 实现零 GC 的高性能碰撞计算。</p>
                 <div>
                     <span class="badge">SAT</span><span class="badge">HalfEdge</span><span class="badge">Sutherland-Hodgman 裁剪</span><span class="badge">Burst</span><span class="badge">Job System</span><span class="badge">NativeContainer</span><span class="badge">Unity Mathematics</span>
                 </div>
@@ -267,15 +465,17 @@
         </div>
     </div>
 
+    <!-- ============ 详情弹窗：跃动嘉年华 ============ -->
     <div id="modal-yd" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modal-yd')">&times;</span>
-            <div class="modal-left">
-                <div id="player-yd" class="player-container"></div>
+            <button class="close-btn" onclick="closeModal('modal-yd')">✕</button>
+            <div class="modal-media">
+                <div id="player-yd" class="player-box"></div>
             </div>
-            <div class="modal-right">
+            <div class="modal-body">
+                <span class="modal-idx">PROJECT 003</span>
                 <h2>《跃动嘉年华》</h2>
-                <p><strong>项目描述：</strong>一款基于物理引擎与状态机驱动的 3D 第三人称派对闯关嘉年华游戏。</p>
+                <p class="modal-desc">一款基于物理引擎与状态机驱动的 3D 第三人称派对闯关嘉年华游戏。</p>
                 <div>
                     <span class="badge">FSM有限状态机</span><span class="badge">Event-Driven 架构</span><span class="badge">物理引擎</span><span class="badge">Shader 开发</span><span class="badge">UGUI</span><span class="badge">Unity Input System</span>
                 </div>
@@ -289,15 +489,17 @@
         </div>
     </div>
 
+    <!-- ============ 详情弹窗：月隧穿梭 ============ -->
     <div id="modal-ys" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modal-ys')">&times;</span>
-            <div class="modal-left">
-                <div id="player-ys" class="player-container"></div>
+            <button class="close-btn" onclick="closeModal('modal-ys')">✕</button>
+            <div class="modal-media">
+                <div id="player-ys" class="player-box"></div>
             </div>
-            <div class="modal-right">
+            <div class="modal-body">
+                <span class="modal-idx">PROJECT 004</span>
                 <h2>《月隧穿梭》</h2>
-                <p><strong>项目描述：</strong>一款在不断动态滚动的程序化圆柱体世界中驾驶载具，通过位移躲避随机障碍物并穿过得分门的无尽地图游戏。</p>
+                <p class="modal-desc">一款在不断动态滚动的程序化圆柱体世界中驾驶载具，通过位移躲避随机障碍物并穿过得分门的无尽地图游戏。</p>
                 <div>
                     <span class="badge">Unity 3D/C#</span><span class="badge">PCG 生成</span><span class="badge">物理引擎</span><span class="badge">UGUI</span>
                 </div>
@@ -312,15 +514,17 @@
         </div>
     </div>
 
+    <!-- ============ 详情弹窗：Flappy Bird ============ -->
     <div id="modal-fb" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modal-fb')">&times;</span>
-            <div class="modal-left">
-                <div id="player-fb" class="player-container"></div>
+            <button class="close-btn" onclick="closeModal('modal-fb')">✕</button>
+            <div class="modal-media">
+                <div id="player-fb" class="player-box"></div>
             </div>
-            <div class="modal-right">
+            <div class="modal-body">
+                <span class="modal-idx">PROJECT 005</span>
                 <h2>《Flappy Bird 重构版》</h2>
-                <p><strong>项目描述：</strong>一款经典的 2D 侧翻滚无尽飞行游戏，核心亮点在于引入 xLua 框架对原生 C# 玩法进行了全面重构，实现了“C# 底层稳定承载 + Lua 业务热更”的混合编程架构。</p>
+                <p class="modal-desc">一款经典的 2D 侧翻滚无尽飞行游戏，核心亮点在于引入 xLua 框架对原生 C# 玩法进行了全面重构，实现了“C# 底层稳定承载 + Lua 业务热更”的混合编程架构。</p>
                 <div>
                     <span class="badge">Unity 2D</span><span class="badge">C# / Lua 混合编程</span><span class="badge">xLua 热更框架</span><span class="badge">DOTween</span><span class="badge">对象池优化</span>
                 </div>
@@ -334,15 +538,17 @@
         </div>
     </div>
 
+    <!-- ============ 详情弹窗：AI 赋能 ============ -->
     <div id="modal-ai" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modal-ai')">&times;</span>
-            <div class="modal-left">
-                <div id="player-ai" class="player-container"></div>
+            <button class="close-btn" onclick="closeModal('modal-ai')">✕</button>
+            <div class="modal-media">
+                <div id="player-ai" class="player-box"></div>
             </div>
-            <div class="modal-right">
+            <div class="modal-body">
+                <span class="modal-idx">PROJECT 006</span>
                 <h2>《AI 赋能：极速小游戏全链路开发实践》</h2>
-                <p><strong>项目描述：</strong>一款基于 CPA + CCswitch + Codex 协同工作流构建的经典休闲游戏合集（含 2048、合成大西瓜、三消类）。该项目旨在探索 AI 在游戏原型快速迭代中的极限效能，通过 AI 辅助生成 100% 的核心代码与美术资产。</p>
+                <p class="modal-desc">一款基于 CPA + CCswitch + Codex 协同工作流构建的经典休闲游戏合集（含 2048、合成大西瓜、三消类）。该项目旨在探索 AI 在游戏原型快速迭代中的极限效能，通过 AI 辅助生成 100% 的核心代码与美术资产。</p>
                 <div>
                     <span class="badge">Unity</span><span class="badge">AI-Driven Workflow (CPA / Codex)</span><span class="badge">C#</span><span class="badge">UGUI</span><span class="badge">Prompt Engineering</span><span class="badge">模块化架构</span>
                 </div>
@@ -357,49 +563,38 @@
     </div>
 
     <script>
-        let playerYD = null;
-        let playerYS = null;
-        let playerFB = null;
-        let playerAI = null;
+        // ============ 弹窗逻辑 ============
+        let playerYD = null, playerYS = null, playerFB = null, playerAI = null;
 
         function openModal(id) {
             const modal = document.getElementById(id);
             modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('show'), 10);
+            requestAnimationFrame(() => modal.classList.add('show'));
             document.body.style.overflow = 'hidden';
 
-            // 动态挂载多吉云播放器，并且顺带设置 poster 属性（利用之前上传好的图片直接占位视频封面）
             if (id === 'modal-yd' && !playerYD) {
                 playerYD = new DogePlayer({
                     container: document.getElementById('player-yd'),
-                    userId: 14972,
-                    vcode: 'bbc9ace1fa3d804d',
-                    autoPlay: false,
-                    poster: 'img/VC.png'
+                    userId: 14972, vcode: 'bbc9ace1fa3d804d',
+                    autoPlay: false, poster: 'img/VC.png'
                 });
             } else if (id === 'modal-ys' && !playerYS) {
                 playerYS = new DogePlayer({
                     container: document.getElementById('player-ys'),
-                    userId: 14972,
-                    vcode: 'c427d142eb70b50f',
-                    autoPlay: false,
-                    poster: 'img/MTS.png'
+                    userId: 14972, vcode: 'c427d142eb70b50f',
+                    autoPlay: false, poster: 'img/MTS.png'
                 });
             } else if (id === 'modal-fb' && !playerFB) {
                 playerFB = new DogePlayer({
                     container: document.getElementById('player-fb'),
-                    userId: 14972,
-                    vcode: '53d7c44481ae7f9a',
-                    autoPlay: false,
-                    poster: 'img/bird.png'
+                    userId: 14972, vcode: '53d7c44481ae7f9a',
+                    autoPlay: false, poster: 'img/bird.png'
                 });
             } else if (id === 'modal-ai' && !playerAI) {
                 playerAI = new DogePlayer({
                     container: document.getElementById('player-ai'),
-                    userId: 14972,
-                    vcode: 'a9e1806d28bc0a43',
-                    autoPlay: false,
-                    poster: 'img/ai.png'
+                    userId: 14972, vcode: 'a9e1806d28bc0a43',
+                    autoPlay: false, poster: 'img/ai.png'
                 });
             }
         }
@@ -410,72 +605,82 @@
             setTimeout(() => {
                 modal.style.display = 'none';
                 document.body.style.overflow = 'auto';
-            }, 300);
-
-            // 关闭弹窗时暂停对应视频
+            }, 250);
             if (id === 'modal-yd' && playerYD) playerYD.pause();
             if (id === 'modal-ys' && playerYS) playerYS.pause();
             if (id === 'modal-fb' && playerFB) playerFB.pause();
             if (id === 'modal-ai' && playerAI) playerAI.pause();
         }
 
-        window.onclick = function (event) {
-            if (event.target.classList.contains('modal')) {
-                closeModal(event.target.id);
+        window.addEventListener('click', function (e) {
+            if (e.target.classList.contains('modal')) closeModal(e.target.id);
+        });
+        window.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(m => closeModal(m.id));
             }
+        });
+
+        // ============ 海报墙滚动 ============
+        function scrollGallery(dir) {
+            const g = document.getElementById('gallery');
+            g.scrollBy({ left: dir * 540, behavior: 'smooth' });
         }
 
-        // ================== 粒子星空背景连线特效 ==================
+        // ============ 入场动画 ============
+        const io = new IntersectionObserver(entries => {
+            entries.forEach(en => {
+                if (en.isIntersecting) { en.target.classList.add('visible'); io.unobserve(en.target); }
+            });
+        }, { threshold: 0.12 });
+        document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+        // ============ 粒子星空背景 ============
         const canvas = document.getElementById('particle-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = innerWidth; canvas.height = innerHeight;
 
-        let particlesArray = [];
-        const numberOfParticles = 100;
+        let particles = [];
+        const N = 90;
 
         class Particle {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 1;
-                this.speedX = (Math.random() * 1 - 0.5);
-                this.speedY = (Math.random() * 1 - 0.5);
+                this.size = Math.random() * 2 + 0.6;
+                this.speedX = (Math.random() - 0.5) * 0.8;
+                this.speedY = (Math.random() - 0.5) * 0.8;
             }
             update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                if (this.size > 0.2) this.size -= 0.01;
+                this.x += this.speedX; this.y += this.speedY;
                 if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
                 if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
             }
             draw() {
-                ctx.fillStyle = 'rgba(14, 165, 233, 0.8)';
+                ctx.fillStyle = 'rgba(34, 211, 238, 0.75)';
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
 
-        function init() {
-            particlesArray = [];
-            for (let i = 0; i < numberOfParticles; i++) {
-                particlesArray.push(new Particle());
-            }
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < N; i++) particles.push(new Particle());
         }
 
         function connect() {
-            for (let a = 0; a < particlesArray.length; a++) {
-                for (let b = a; b < particlesArray.length; b++) {
-                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
-                        + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
-                    if (distance < (canvas.width / 10) * (canvas.height / 10)) {
-                        let opacityValue = 1 - (distance / 20000);
-                        ctx.strokeStyle = 'rgba(14, 165, 233,' + opacityValue + ')';
-                        ctx.lineWidth = 1;
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a + 1; b < particles.length; b++) {
+                    const dx = particles[a].x - particles[b].x;
+                    const dy = particles[a].y - particles[b].y;
+                    const dist = dx * dx + dy * dy;
+                    if (dist < 22000) {
+                        ctx.strokeStyle = 'rgba(34, 211, 238,' + (1 - dist / 22000) * 0.35 + ')';
+                        ctx.lineWidth = 0.8;
                         ctx.beginPath();
-                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
-                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
                         ctx.stroke();
                     }
                 }
@@ -485,20 +690,16 @@
         function animate() {
             requestAnimationFrame(animate);
             ctx.clearRect(0, 0, innerWidth, innerHeight);
-            for (let i = 0; i < particlesArray.length; i++) {
-                particlesArray[i].update();
-                particlesArray[i].draw();
-            }
+            for (const p of particles) { p.update(); p.draw(); }
             connect();
         }
 
-        window.addEventListener('resize', function () {
-            canvas.width = innerWidth;
-            canvas.height = innerHeight;
-            init();
+        addEventListener('resize', () => {
+            canvas.width = innerWidth; canvas.height = innerHeight;
+            initParticles();
         });
 
-        init();
+        initParticles();
         animate();
     </script>
 </body>
