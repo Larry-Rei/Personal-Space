@@ -143,16 +143,21 @@
         /* ============ 项目海报墙（横向滚动） ============ */
         .gallery-wrap { position: relative; }
         .gallery {
-            display: flex; gap: 26px; overflow-x: auto; padding: 20px 6px 30px;
+            display: grid;
+            grid-auto-flow: column;              /* 列优先：先填满一列上下两格，再换下一列 */
+            grid-template-rows: repeat(2, auto); /* 双行 */
+            grid-auto-columns: 500px;            /* 每列宽度 */
+            gap: 26px;
+            overflow-x: auto; padding: 20px 6px 30px;
             scroll-snap-type: x mandatory; scrollbar-width: none;
         }
         .gallery::-webkit-scrollbar { display: none; }
 
         .poster {
-            flex: 0 0 auto; width: 500px; aspect-ratio: 4 / 3; border-radius: 16px;
             position: relative; overflow: hidden; cursor: pointer;
-            border: 1px solid var(--line); scroll-snap-align: start;
+            border: 1px solid var(--line); scroll-snap-align: start; border-radius: 16px;
             background: #0b1120; transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            aspect-ratio: 4 / 3;
         }
         .poster img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
         .poster:hover { transform: translateY(-8px) scale(1.03); border-color: var(--cyan); box-shadow: 0 0 45px var(--cyan-glow); }
@@ -245,7 +250,7 @@
             .modal-content { flex-direction: column; max-height: 94vh; }
             .modal-body { padding: 24px; }
             .gallery-btn { display: none; }
-            .poster { width: 86vw; }
+            .gallery { grid-auto-columns: 62vw; }
         }
     </style>
 </head>
