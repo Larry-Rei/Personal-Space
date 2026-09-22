@@ -367,21 +367,11 @@
                         </div>
                     </article>
 
-                    <article class="poster" onclick="openModal('modal-ys')">
-                        <img src="img/MTS.png" alt="月隧穿梭">
-                        <span class="poster-play">▶</span>
-                        <div class="poster-overlay">
-                            <span class="poster-idx">004</span>
-                            <h3>《月隧穿梭》</h3>
-                            <p class="poster-tags">PCG 生成 · 物理引擎 · WheelCollider</p>
-                        </div>
-                    </article>
-
                     <article class="poster" onclick="openModal('modal-fb')">
                         <img src="img/bird.png" alt="Flappy Bird 重构版">
                         <span class="poster-play">▶</span>
                         <div class="poster-overlay">
-                            <span class="poster-idx">005</span>
+                            <span class="poster-idx">004</span>
                             <h3>《Flappy Bird 重构版》</h3>
                             <p class="poster-tags">xLua 热更框架 · C# / Lua 混合编程</p>
                         </div>
@@ -391,7 +381,7 @@
                         <img src="img/ai.png" alt="AI 赋能极速小游戏">
                         <span class="poster-play">▶</span>
                         <div class="poster-overlay">
-                            <span class="poster-idx">006</span>
+                            <span class="poster-idx">005</span>
                             <h3>《AI 赋能极速小游戏全链路》</h3>
                             <p class="poster-tags">AI-Driven Workflow · Prompt Engineering</p>
                         </div>
@@ -494,31 +484,6 @@
         </div>
     </div>
 
-    <!-- ============ 详情弹窗：月隧穿梭 ============ -->
-    <div id="modal-ys" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal('modal-ys')">✕</button>
-            <div class="modal-media">
-                <div id="player-ys" class="player-box"></div>
-            </div>
-            <div class="modal-body">
-                <span class="modal-idx">PROJECT 004</span>
-                <h2>《月隧穿梭》</h2>
-                <p class="modal-desc">一款在不断动态滚动的程序化圆柱体世界中驾驶载具，通过位移躲避随机障碍物并穿过得分门的无尽地图游戏。</p>
-                <div>
-                    <span class="badge">Unity 3D/C#</span><span class="badge">PCG 生成</span><span class="badge">物理引擎</span><span class="badge">UGUI</span>
-                </div>
-                <h4>⚙️ 核心架构与逻辑拆解</h4>
-                <ul>
-                    <li><strong>程序化网格生成与性能优化：</strong>运用柏林噪声算法与三角函数，在运行时动态计算顶点与三角形索引，纯代码构建高低起伏的地形网格 (Mesh)。设计基于“双地图块滑动窗口”的动态拼接机制，实现极低内存开销。</li>
-                    <li><strong>载具控制与核心玩法闭环：</strong>独立编写 Car 核心控制器脚本，实现响应迅速的转向逻辑。设计基于极坐标系的障碍物随机生成算法，实现动态递增难度曲线与计分机制。</li>
-                    <li><strong>物理系统与视觉反馈：</strong>深度集成 WheelCollider，处理高拟真碰撞检测与翻车解体判定。结合 Raycast 实时判定地形材质触发打滑、扬尘粒子特效 (Particle System) 及音效。</li>
-                    <li><strong>UI 架构与动画：</strong>基于 UGUI 构建双场景交互框架，运用 Animator 状态机驱动 UI 面板的平滑过渡与动态反馈演出。</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
     <!-- ============ 详情弹窗：Flappy Bird ============ -->
     <div id="modal-fb" class="modal">
         <div class="modal-content">
@@ -527,7 +492,7 @@
                 <div id="player-fb" class="player-box"></div>
             </div>
             <div class="modal-body">
-                <span class="modal-idx">PROJECT 005</span>
+                <span class="modal-idx">PROJECT 004</span>
                 <h2>《Flappy Bird 重构版》</h2>
                 <p class="modal-desc">一款经典的 2D 侧翻滚无尽飞行游戏，核心亮点在于引入 xLua 框架对原生 C# 玩法进行了全面重构，实现了“C# 底层稳定承载 + Lua 业务热更”的混合编程架构。</p>
                 <div>
@@ -551,7 +516,7 @@
                 <div id="player-ai" class="player-box"></div>
             </div>
             <div class="modal-body">
-                <span class="modal-idx">PROJECT 006</span>
+                <span class="modal-idx">PROJECT 005</span>
                 <h2>《AI 赋能：极速小游戏全链路开发实践》</h2>
                 <p class="modal-desc">一款基于 CPA + CCswitch + Codex 协同工作流构建的经典休闲游戏合集（含 2048、合成大西瓜、三消类）。该项目旨在探索 AI 在游戏原型快速迭代中的极限效能，通过 AI 辅助生成 100% 的核心代码与美术资产。</p>
                 <div>
@@ -569,7 +534,7 @@
 
     <script>
         // ============ 弹窗逻辑 ============
-        let playerZZZ = null, playerYS = null, playerFB = null, playerAI = null;
+        let playerZZZ = null, playerFB = null, playerAI = null;
 
         function openModal(id) {
             const modal = document.getElementById(id);
@@ -582,12 +547,6 @@
                     container: document.getElementById('player-zzz'),
                     userId: 14972, vcode: 'd81a0b5c335afb1a',
                     autoPlay: false, poster: 'img/zzz.png'
-                });
-            } else if (id === 'modal-ys' && !playerYS) {
-                playerYS = new DogePlayer({
-                    container: document.getElementById('player-ys'),
-                    userId: 14972, vcode: 'c427d142eb70b50f',
-                    autoPlay: false, poster: 'img/MTS.png'
                 });
             } else if (id === 'modal-fb' && !playerFB) {
                 playerFB = new DogePlayer({
@@ -612,7 +571,6 @@
                 document.body.style.overflow = 'auto';
             }, 250);
             if (id === 'modal-zzz' && playerZZZ) playerZZZ.pause();
-            if (id === 'modal-ys' && playerYS) playerYS.pause();
             if (id === 'modal-fb' && playerFB) playerFB.pause();
             if (id === 'modal-ai' && playerAI) playerAI.pause();
         }
