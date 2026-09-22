@@ -357,13 +357,13 @@
                         </div>
                     </article>
 
-                    <article class="poster" onclick="openModal('modal-zzz')">
-                        <img src="img/zzz.png" alt="绝区零角色状态机复刻">
+                    <article class="poster" onclick="openModal('modal-yd')">
+                        <img src="img/VC.png" alt="跃动嘉年华">
                         <span class="poster-play">▶</span>
                         <div class="poster-overlay">
                             <span class="poster-idx">003</span>
-                            <h3>《绝区零角色状态机复刻》</h3>
-                            <p class="poster-tags">双状态机 FSM · 数据驱动连招 · 打击感与镜头演出</p>
+                            <h3>《跃动嘉年华》</h3>
+                            <p class="poster-tags">FSM 状态机 · Unity Input System · 3C</p>
                         </div>
                     </article>
 
@@ -470,25 +470,25 @@
         </div>
     </div>
 
-    <!-- ============ 详情弹窗：绝区零角色状态机复刻 ============ -->
-    <div id="modal-zzz" class="modal">
+    <!-- ============ 详情弹窗：跃动嘉年华 ============ -->
+    <div id="modal-yd" class="modal">
         <div class="modal-content">
-            <button class="close-btn" onclick="closeModal('modal-zzz')">✕</button>
+            <button class="close-btn" onclick="closeModal('modal-yd')">✕</button>
             <div class="modal-media">
-                <div id="player-zzz" class="player-box"></div>
+                <div id="player-yd" class="player-box"></div>
             </div>
             <div class="modal-body">
                 <span class="modal-idx">PROJECT 003</span>
-                <h2>《绝区零角色状态机复刻》</h2>
-                <p class="modal-desc">仿《绝区零》手感复刻的角色状态机与简单战斗系统：双状态机并行驱动位移与连招，数据驱动配置招式手感，事件解耦攻防双方，并配合三层虚拟相机与 Timeline 完成镜头演出。</p>
+                <h2>《跃动嘉年华》</h2>
+                <p class="modal-desc">一款基于物理引擎与状态机驱动的 3D 第三人称派对闯关嘉年华游戏。</p>
                 <div>
-                    <span class="badge">FSM 有限状态机</span><span class="badge">StateMachineBehaviour 动画事件驱动</span><span class="badge">ScriptableObject 数据驱动</span><span class="badge">Event-Driven 事件解耦</span><span class="badge">对象池</span><span class="badge">Cinemachine</span><span class="badge">Timeline</span><span class="badge">New Input System</span>
+                    <span class="badge">FSM有限状态机</span><span class="badge">Event-Driven 架构</span><span class="badge">物理引擎</span><span class="badge">Shader 开发</span><span class="badge">UGUI</span><span class="badge">Unity Input System</span>
                 </div>
                 <h4>⚙️ 核心架构与逻辑拆解</h4>
                 <ul>
-                    <li><strong>双状态机架构与动画事件驱动：</strong>实现基于 FSM 的双状态机角色系统——移动状态机（10 种状态，接管位移 / 闪避 / 转身 / 切人）与连招状态机（攻击 / 技能）两个正交维度并行运行，通过 IState 接口统一生命周期、抽象状态基类承载公共流程，并基于可监听数据字段实现状态变更的订阅式通知。采用 StateMachineBehaviour 让动画反向驱动状态切换，配合输入缓冲，实现丝滑的起步、急停与出招衔接。</li>
-                    <li><strong>数据驱动连招系统与打击感表现：</strong>以 ScriptableObject 为载体构建连招数据体系（连段列表 / 单段招式 / 移动参数 / 索敌参数各自独立资产），将伤害、攻击距离、伤害点数、顿帧时长、震屏力度、受击动画名全部外置为可配置数据，使多角色共用同一套逻辑代码。基于动画事件实现“闸门式”衔接（预输入 + 衔接许可），支持冲刺中临时替换起手式并自动还原；打击感由 Cinemachine Impulse 震屏、Animator.speed 顿帧、Time.timeScale 慢动作三者组合实现，并同步粒子播放速度避免穿帮。</li>
-                    <li><strong>事件解耦、资源池化与镜头演出：</strong>通过多泛型字符串事件中心实现攻击方与受击方的彻底解耦——攻击者只广播伤害事件，受击方自行判定归属并驱动受击 / 格挡两套动画与掉血计算；构建特效与音效对象池（按“角色 + 名称”两级索引，开局预热、运行时零 Instantiate/Destroy，实例通过生命周期回调自管理回收）；镜头采用 Cinemachine 三层虚拟相机（跟随 / 状态驱动技能机位 / 切人机位）按优先级竞争与 Blend 过渡，大招运镜由 Timeline 录制轨道驱动，并用 Signal 在时间点同步慢动作等演出效果。</li>
+                    <li><strong>核心状态机架构搭建：</strong>主导设计基于 FSM (有限状态机) 的角色状态管理系统。通过抽象 Entity 基类统一封装实体物理属性与基础行为，严格定义 EntityState 生命周期。实现了主角十余种复杂交互状态的无缝切换及敌对单位的巡逻逻辑，大幅提升系统扩展性。</li>
+                    <li><strong>3C 体验与物理控制器开发：</strong>基于纯物理系统从零构建角色控制器，全面接入 New Input System。熟练运用物理射线检测 (CapsuleCast) 与 3D 向量数学处理复杂斜坡与碰撞穿透，结合 Cinemachine 打磨出丝滑连贯的体验。</li>
+                    <li><strong>Shader 特效与事件解耦：</strong>运用 Perlin Noise 噪声采样与 Alpha Clip 技术定制“焚尽消散”材质特效。通过监听底层 Entity 事件中心广播的死亡信号触发视觉表现，完美实现数据层与表现层的逻辑解耦。</li>
                 </ul>
             </div>
         </div>
@@ -569,7 +569,7 @@
 
     <script>
         // ============ 弹窗逻辑 ============
-        let playerZZZ = null, playerYS = null, playerFB = null, playerAI = null;
+        let playerYD = null, playerYS = null, playerFB = null, playerAI = null;
 
         function openModal(id) {
             const modal = document.getElementById(id);
@@ -577,11 +577,11 @@
             requestAnimationFrame(() => modal.classList.add('show'));
             document.body.style.overflow = 'hidden';
 
-            if (id === 'modal-zzz' && !playerZZZ) {
-                playerZZZ = new DogePlayer({
-                    container: document.getElementById('player-zzz'),
-                    userId: 14972, vcode: 'd81a0b5c335afb1a',
-                    autoPlay: false, poster: 'img/zzz.png'
+            if (id === 'modal-yd' && !playerYD) {
+                playerYD = new DogePlayer({
+                    container: document.getElementById('player-yd'),
+                    userId: 14972, vcode: 'bbc9ace1fa3d804d',
+                    autoPlay: false, poster: 'img/VC.png'
                 });
             } else if (id === 'modal-ys' && !playerYS) {
                 playerYS = new DogePlayer({
@@ -611,7 +611,7 @@
                 modal.style.display = 'none';
                 document.body.style.overflow = 'auto';
             }, 250);
-            if (id === 'modal-zzz' && playerZZZ) playerZZZ.pause();
+            if (id === 'modal-yd' && playerYD) playerYD.pause();
             if (id === 'modal-ys' && playerYS) playerYS.pause();
             if (id === 'modal-fb' && playerFB) playerFB.pause();
             if (id === 'modal-ai' && playerAI) playerAI.pause();
